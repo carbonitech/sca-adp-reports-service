@@ -1,0 +1,21 @@
+{
+    "CREDENTIALS": 
+    {
+        "COMPANY": "70603",
+        "USER": "joe",
+        "PASSWORD": "HZm1PVAI1"
+    },
+    "URLS": {
+        "URL_LOGIN": "https://adpinside.com/irj/portal/adp/login",
+        "URL_A": "https://adpinside.com/irj/servlet/prt/portal/prtroot/pcd!3aportal_content!2f00_lennox_content_library!2fadp!2froles!2fcom.lii.wwhc.adp.rol.adp_sales_rep!2fcom.lii.wwhc.adp.wks.parent.orders_salesrep!2forder_status!2fcom.lii.wwhc.adp.page.Sales_Report",
+        "URL_B": "https://adpinside.com/webdynpro/resources/sap.com/pb/PageBuilder;jsessionid=zNh8mlNpPn97udO1EoeN18ZcgSrffQEaTXUA_SAP",
+        "URL_C": "https://adpinside.com/webdynpro/resources/sap.com/pb/PageBuilder"
+    },
+    "APP_CONFIGS": {
+        "SECRET_KEY": "dev",
+        "SECURITY_PASSWORD_SALT": "dev",
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///siteDB.db",
+        "SQLALCHEMY_TRACK_MODIFICATIONS": false,
+        "WTF_CSRF_ENABLED": true
+    }
+}
