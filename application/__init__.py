@@ -1,5 +1,5 @@
 from flask import Flask
-from routes import adp
+from application.routes import adp
 
 
 def create_app():
