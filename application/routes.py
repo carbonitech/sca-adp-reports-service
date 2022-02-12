@@ -33,8 +33,9 @@ def request_report():
                 try:
                     last_call = user[5]
                     now = datetime.now()
-                    if (now-last_call).seconds <= 120:
-                        return Response(f"Last request was at {user[5]}. Please wait a few minutes before sending another request.",200)
+                    if last_call:
+                        if (now-last_call).seconds <= 120:
+                            return Response(f"Last request was at {user[5]}. Please wait a few minutes before sending another request.",200)
                     report_bytes: bytes = adp_retrieval.fetch_data(
                         company=user[0],
                         user=user[1],
@@ -55,7 +56,7 @@ def request_report():
                         "","","",
                         (report_bytes, "ADP Report.xls")
                     )
-                    conn.execute(f"INSERT INTO users (last_request) VALUES({now}")
+                    conn.execute("UPDATE users SET last_request = %s WHERE api_key = %s",(now, key))
                     return Response(f"Successfully sent report. Check your email address {user[3]}",200)
             else:
                 return Response(f"User with api key {key} not found", 200)
