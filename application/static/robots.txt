@@ -1,0 +1,6 @@
+# This site is meant for api calls
+# Nothing to scrape here. Please go away
+
+User-agent: *
+Disallow: /adp-reports
+Disallow: /adp-reports/new_user
