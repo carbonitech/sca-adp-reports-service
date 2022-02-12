@@ -13,6 +13,10 @@ adp = Blueprint('adp', __name__)
 
 @adp.route('/adp-reports')
 def request_report():
+
+    if "facebookexternalhit" in str(request.user_agent):
+        return Response("Go Away",418)
+        
     key = request.args.get('api-key')
     if not key:
         return Response("Enter your api key into the url set to the parameter 'api-key'",200)
@@ -64,6 +68,10 @@ def request_report():
 
 @adp.route('/adp-reports/new_user')
 def register_user():
+
+    if "facebookexternalhit" in str(request.user_agent):
+        return Response("Go Away",418)
+
     company = request.args.get('company', type=str)
     user = request.args.get('user', type=str)
     password = request.args.get('password', type=str)
