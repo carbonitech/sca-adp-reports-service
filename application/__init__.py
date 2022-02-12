@@ -2,12 +2,11 @@ import os
 import pandas
 from hashlib import sha256
 from flask import Flask, Response, request
-from io import BytesIO
 from application import adp_retrieval, emailHelper
 from sqlalchemy import create_engine
 
 
-DATABASE = os.environ.get('DATABASE_URL')
+DATABASE = os.environ.get('DATABASE_URL').replace("postgres://","postgresql://")
 TABLE = 'users'
 
 def create_app():
