@@ -97,7 +97,7 @@ def create_app():
                 <p>Successfully Registered.</p>
                 <p>Use this key to have the ADP reports automatically emailed to you upon request</p>
                 <p style="margin-left: 15px">{api_key}</p>
-                <p>Bookmark this link and click it when you want your report --> https://adp-report-api.herokuapp.com/adp-reports?api_key=<b><u>{api_key}</u></b>
+                <p>Bookmark this link and click it when you want your report --> https://adp-report-api.herokuapp.com/adp-reports?api-key=<b><u>{api_key}</u></b>
                 """
                 emailHelper.send_email(email,"Resgistration Complete",msg,"","")
                 return Response("successfully registered",200)
