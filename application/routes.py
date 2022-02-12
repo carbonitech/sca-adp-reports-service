@@ -2,7 +2,7 @@ import os
 import pandas
 from datetime import datetime
 from hashlib import sha256
-from flask import request, Response, Blueprint
+from flask import render_template, request, Response, Blueprint
 from sqlalchemy import create_engine
 from application import adp_retrieval, emailHelper
 
@@ -68,6 +68,9 @@ def register_user():
     user = request.args.get('user', type=str)
     password = request.args.get('password', type=str)
     email = request.args.get('email', type=str)
+
+    if not company or not user or not password or not email:
+        return render_template('register_user.html')
 
     engine = create_engine(DATABASE)
     with engine.connect() as conn:
