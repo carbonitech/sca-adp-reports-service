@@ -56,7 +56,7 @@ def request_report():
                 else:
                     emailHelper.send_email(
                         user[3],
-                        "ADP Open Order & Shipments",
+                        "ADP Open Orders & Shipments",
                         "","","",
                         (formatting.format_tables(report_bytes), "ADP Report.xlsx")
                     )
