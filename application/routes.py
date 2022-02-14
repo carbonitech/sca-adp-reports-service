@@ -4,7 +4,7 @@ from datetime import datetime
 from hashlib import sha256
 from flask import render_template, request, Response, Blueprint
 from sqlalchemy import create_engine
-from application import adp_retrieval, emailHelper
+from application import adp_retrieval, emailHelper, formatting
 
 DATABASE = os.environ.get('DATABASE_URL').replace("postgres://","postgresql://") # corrects for heroku DATABASE URL
 TABLE = 'users'
@@ -58,7 +58,7 @@ def request_report():
                         user[3],
                         "ADP Open Order & Shipments",
                         "","","",
-                        (report_bytes, "ADP Report.xls")
+                        (formatting.format_tables(report_bytes), "ADP Report.xlsx")
                     )
                     conn.execute("UPDATE users SET last_request = %s WHERE api_key = %s",(now, key))
                     return Response(f"Successfully sent report. Check your email address {user[3]}",200)
