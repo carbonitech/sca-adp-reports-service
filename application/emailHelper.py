@@ -9,8 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 EMAIL_ADDRESS = os.environ.get("OUTLOOK_EMAIL_ADDRESS")
-EMAIL_PASSWORD = os.environ.get("OUTLOOK_EMAIL_PASSWORD")
-print(EMAIL_ADDRESS, EMAIL_PASSWORD)
+EMAIL_PASSWORD = os.environ.get("OUTLOOK_PASSWORD")
 
 class CustomEmailMessage(EmailMessage):
     """
@@ -71,7 +70,6 @@ def send_email(recipients, subject, template_msg, msg_list,
             email.new_file_attachment(attachments)
 
     # send Email
-    print(EMAIL_ADDRESS, EMAIL_PASSWORD)
     mailserver = smtplib.SMTP('smtp.office365.com',587)
     mailserver.starttls()
     mailserver.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
