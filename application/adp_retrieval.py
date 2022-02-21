@@ -1,7 +1,9 @@
+from flask import appcontext_popped
 import requests
 import json
 import os
 from bs4 import BeautifulSoup
+from application import emailHelper, formatting
 
 _HERE = os.path.dirname(__file__)
 
@@ -81,3 +83,27 @@ def fetch_data(**kwargs) -> bytes:
         resp = session.get(download_link.replace("../../", "https://adpinside.com/webdynpro/resources/"))
 
         return resp.content
+
+
+def run_service(**kwargs) -> None:
+    email = kwargs.get('email')
+    try:
+        report_bytes: bytes = fetch_data(
+            company=kwargs.get('company'),
+            user=kwargs.get('user'),
+            password=kwargs.get('password')
+        )
+    except LoginError:
+        emailHelper.send_email(
+            email,
+            "Failed to Login",
+            "Failed to log-in to ADPinside.com with your credentials",
+            "",""
+        )
+    else:
+        emailHelper.send_email(
+            email,
+            "ADP Open Orders & Shipments",
+            "","","",
+            (formatting.format_tables(report_bytes), "ADP Report.xlsx")
+        )

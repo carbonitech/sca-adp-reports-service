@@ -2,14 +2,19 @@ import os
 import pandas
 from datetime import datetime
 from hashlib import sha256
+from dotenv import load_dotenv
+from rq import Queue
 from flask import render_template, request, Response, Blueprint
 from sqlalchemy import create_engine
 from application import adp_retrieval, emailHelper, formatting
+from worker import conn as redis_conn
 
+load_dotenv()
 DATABASE = os.environ.get('DATABASE_URL').replace("postgres://","postgresql://") # corrects for heroku DATABASE URL
 TABLE = 'users'
 
 adp = Blueprint('adp', __name__)
+q = Queue(connection=redis_conn)
 
 @adp.route('/adp-reports')
 def request_report():
@@ -20,6 +25,7 @@ def request_report():
     key = request.args.get('api-key')
     if not key:
         return Response("Enter your api key into the url set to the parameter 'api-key'",200)
+
     engine = create_engine(DATABASE)
     with engine.connect() as conn:
         db_tables = conn.execute("""
@@ -29,41 +35,33 @@ def request_report():
             ORDER BY table_name;
         """).fetchall()
         db_tables_namelist = [tab[0] for tab in db_tables]
+
         if TABLE not in db_tables_namelist:
             return Response("No users have been initialized. Register the first user.", 500)
         else:
             user = conn.execute(f"SELECT * FROM {TABLE} WHERE api_key = %s;", [key]).fetchone()
             if user:
-                try:
-                    last_call = user[5]
-                    now = datetime.now()
-                    if last_call:
-                        if (now-last_call).seconds <= 120:
-                            return Response(f"Last request was at {user[5]}. Please wait a few minutes before sending another request.",200)
-                    report_bytes: bytes = adp_retrieval.fetch_data(
-                        company=user[0],
-                        user=user[1],
-                        password=user[2]
-                    )
-                except adp_retrieval.LoginError:
-                    emailHelper.send_email(
-                        user[3],
-                        "Failed to Login",
-                        "Failed to log-in to ADPinside.com with your credentials",
-                        "",""
-                    )
-                    return Response("Failed to log in to ADPinside.com",200)
-                else:
-                    emailHelper.send_email(
-                        user[3],
-                        "ADP Open Orders & Shipments",
-                        "","","",
-                        (formatting.format_tables(report_bytes), "ADP Report.xlsx")
-                    )
-                    conn.execute("UPDATE users SET last_request = %s WHERE api_key = %s",(now, key))
-                    return Response(f"Successfully sent report. Check your email address {user[3]}",200)
-            else:
-                return Response(f"User with api key {key} not found", 200)
+                company=user[0],
+                un=user[1],
+                pw=user[2]
+                email=user[3]
+                last_call = user[5]
+
+                now = datetime.now()
+                if last_call:
+                    if (now-last_call).seconds <= 120:
+                        return Response(f"Last request was at {last_call}. Please wait a few minutes before sending another request.",200)
+
+                q.enqueue(
+                    adp_retrieval.run_service,
+                    company=company,
+                    user=un,
+                    password=pw,
+                    email=email
+                )
+                conn.execute(f"UPDATE {TABLE} SET last_request = %s WHERE api_key = %s",(now, key))
+
+            return Response(f"Request received. Check your email {email} after a few moments.",200)
 
 
 @adp.route('/adp-reports/new_user')
@@ -83,6 +81,11 @@ def register_user():
     engine = create_engine(DATABASE)
     with engine.connect() as conn:
         api_key = sha256((company+user+email+password).encode()).hexdigest()
+        msg = f"""
+            <p>Successfully Registered.</p>
+            <p>Use this link to have the ADP reports automatically emailed to you upon request</p>
+            <p style="margin-left: 15px">https://adp-report-api.herokuapp.com/adp-reports?api-key={api_key}</p>
+            """
         db_tables = conn.execute("""
             SELECT table_name 
             FROM information_schema.tables 
@@ -90,6 +93,7 @@ def register_user():
             ORDER BY table_name;
         """).fetchall()
         db_tables_namelist = [tab[0] for tab in db_tables]
+        
         if TABLE not in db_tables_namelist:
             first_user = pandas.DataFrame(
                 {'company': [company],
@@ -108,11 +112,5 @@ def register_user():
                 VALUES(%s, %s, %s, %s, %s);
                 """,
                 (company, user, password, email, api_key))
-            msg = f"""
-            <p>Successfully Registered.</p>
-            <p>Use this key to have the ADP reports automatically emailed to you upon request</p>
-            <p style="margin-left: 15px">{api_key}</p>
-            <p>Bookmark this link and click it when you want your report --> https://adp-report-api.herokuapp.com/adp-reports?api-key=<b><u>{api_key}</u></b>
-            """
             emailHelper.send_email(email,"Resgistration Complete",msg,"","")
             return Response("successfully registered",200)

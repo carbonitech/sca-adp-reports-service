@@ -1,8 +1,15 @@
+"""subclass EmailMessage to simplify file attachments and building/sending an email"""
+from typing import Union
 from email.message import EmailMessage
 import mimetypes
 import smtplib
 import os
-from typing import Union
+from dotenv import load_dotenv
+
+load_dotenv()
+
+EMAIL_ADDRESS = os.getenv("OUTLOOK_EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.getenv("OUTLOOK_EMAIL_PASSWORD")
 
 class CustomEmailMessage(EmailMessage):
     """
@@ -34,11 +41,14 @@ class CustomEmailMessage(EmailMessage):
 
 def send_email(recipients, subject, template_msg, msg_list, 
         msg_signature, attachments: Union[str,list,tuple]=None):
-
+    """
+    conveinece function for building and sending an email
+        using the function variables
+    """
     email = CustomEmailMessage()
     email['Subject'] = subject
     email['To'] = recipients
-    email['From'] = os.environ.get('OUTLOOK_EMAIL_ADDRESS')
+    email['From'] = EMAIL_ADDRESS
     email.set_content("")
     email.add_alternative(f"""
         <font face="Roboto, sans-serif">
@@ -62,6 +72,6 @@ def send_email(recipients, subject, template_msg, msg_list,
     # send Email
     mailserver = smtplib.SMTP('smtp.office365.com',587)
     mailserver.starttls()
-    mailserver.login(os.environ.get('OUTLOOK_EMAIL_ADDRESS'), os.environ.get('OUTLOOK_PASSWORD'))
+    mailserver.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
     mailserver.send_message(email)
     mailserver.quit()
