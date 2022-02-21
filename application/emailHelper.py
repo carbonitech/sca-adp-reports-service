@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-EMAIL_ADDRESS = os.getenv("OUTLOOK_EMAIL_ADDRESS")
-EMAIL_PASSWORD = os.getenv("OUTLOOK_EMAIL_PASSWORD")
+EMAIL_ADDRESS = os.environ.get("OUTLOOK_EMAIL_ADDRESS")
+EMAIL_PASSWORD = os.environ.get("OUTLOOK_EMAIL_PASSWORD")
 
 class CustomEmailMessage(EmailMessage):
     """
