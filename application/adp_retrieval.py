@@ -1,4 +1,4 @@
-from flask import appcontext_popped
+import traceback
 import requests
 import json
 import os
@@ -98,6 +98,13 @@ def run_service(**kwargs) -> None:
             email,
             "Failed to Login",
             "Failed to log-in to ADPinside.com with your credentials",
+            "",""
+        )
+    except Exception as e:
+        emailHelper.send_email(
+            "jcarboni@shupecarboni.com",
+            "Error in adp-report-api",
+            traceback.format_exc(e),
             "",""
         )
     else:
