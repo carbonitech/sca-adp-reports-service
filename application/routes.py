@@ -1,12 +1,12 @@
 import os
 import pandas
-from datetime import datetime
+from datetime import datetime, timedelta
 from hashlib import sha256
 from dotenv import load_dotenv
 from rq import Queue
 from flask import render_template, request, Response, Blueprint
 from sqlalchemy import create_engine
-from application import adp_retrieval, emailHelper, formatting
+from application import adp_retrieval, emailHelper
 from worker import conn as redis_conn
 
 load_dotenv()
@@ -41,8 +41,8 @@ def request_report():
         else:
             user = conn.execute(f"SELECT * FROM {TABLE} WHERE api_key = %s;", [key]).fetchone()
             if user:
-                company=user[0],
-                un=user[1],
+                company=user[0]
+                un=user[1]
                 pw=user[2]
                 email=user[3]
                 last_call = user[5]
@@ -100,7 +100,8 @@ def register_user():
                 'username': [user],
                 'password': [password],
                 'email_address': [email],
-                'api_key': [api_key]}
+                'api_key': [api_key],
+                'last_request': datetime.now()-timedelta(seconds=300)}
                 )
             first_user.to_sql(TABLE, conn, index=False)
             emailHelper.send_email(email,"Resgistration Complete",msg,"","")
