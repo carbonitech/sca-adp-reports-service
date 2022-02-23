@@ -113,10 +113,10 @@ def register_user():
         else:
             conn.execute(
                 f"""
-                INSERT INTO {TABLE} (company, username, password, email_address, api_key) 
-                VALUES(%s, %s, %s, %s, %s);
+                INSERT INTO {TABLE} (company, username, password, email_address, api_key, last_request) 
+                VALUES(%s, %s, %s, %s, %s, %s);
                 """,
-                (company, user, password, email, api_key))
+                (company, user, password, email, api_key,datetime.now()-timedelta(seconds=300)))
             resp = emailHelper.send_email([email],"Registration Complete",msg)
             if 200 <= resp < 299:
                 return Response("successfully registered",resp)

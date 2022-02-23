@@ -4,7 +4,6 @@ from typing import Union, List
 from email.message import EmailMessage
 import mimetypes
 import requests
-import json
 import smtplib
 from dotenv import load_dotenv
 
@@ -15,6 +14,7 @@ load_dotenv()
 LOGIN_EMAIL_ADDRESS = os.environ.get("LOGIN_EMAIL_ADDRESS")
 LOGIN_EMAIL_PASSWORD = os.environ.get("LOGIN_EMAIL_PASSWORD")
 SENDER_EMAIL_ADDRESS = os.environ.get("SENDER_EMAIL_ADDRESS")
+SENDER_USER_ID = os.environ.get("SENDER_USER_ID")
 
 class CustomEmailMessage(EmailMessage):
     """
@@ -107,9 +107,9 @@ def send_email(recipients: list, subject: str, message: str=None, attachments: L
                 "contentBytes": f"{content}"
             } for name, content in attachments
         ]
-    sendmail_request_body.update({"attachments": attachments_formatted})
+        sendmail_request_body.update({"attachments": attachments_formatted})
 
-    api_url = "https://graph.microsoft.com/v1.0/me/sendMail"
+    api_url = f"https://graph.microsoft.com/v1.0/users/{SENDER_USER_ID}/sendMail"
     headers = {
         "Content-type": "application/json",
         "Authorization": 'Bearer ' + azure_auth.get_auth_token_for_ms_graph()}
