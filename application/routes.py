@@ -10,8 +10,9 @@ from application import adp_retrieval, emailHelper
 from worker import conn as redis_conn
 
 load_dotenv()
-DATABASE = os.environ.get('DATABASE_URL').replace("postgres://","postgresql://") # corrects for heroku DATABASE URL
-TABLE = 'users'
+DATABASE = os.environ.get('DATABASE_URL')
+DATABASE = DATABASE.replace("postgres://","postgresql://") # fixes heroku DATABASE_URL
+TABLE = os.environ.get('USERS_TABLE')
 
 adp = Blueprint('adp', __name__)
 q = Queue(connection=redis_conn)
@@ -37,7 +38,7 @@ def request_report():
         db_tables_namelist = [tab[0] for tab in db_tables]
 
         if TABLE not in db_tables_namelist:
-            return Response("No users have been initialized. Register the first user.", 500)
+            return Response("No users have been initialized. Register the first user.", 404)
         else:
             user = conn.execute(f"SELECT * FROM {TABLE} WHERE api_key = %s;", [key]).fetchone()
             if user:
@@ -104,8 +105,11 @@ def register_user():
                 'last_request': datetime.now()-timedelta(seconds=300)}
                 )
             first_user.to_sql(TABLE, conn, index=False)
-            emailHelper.send_email(email,"Resgistration Complete",msg,"","")
-            return Response("Database initialized and first user created", 200)
+            resp = emailHelper.send_email([email],"Registration Complete",msg)
+            if 200 <= resp < 299:
+                return Response("Database initialized and first user created", resp)
+            else:
+                return Response("Error occured", resp)
         else:
             conn.execute(
                 f"""
@@ -113,5 +117,8 @@ def register_user():
                 VALUES(%s, %s, %s, %s, %s);
                 """,
                 (company, user, password, email, api_key))
-            emailHelper.send_email(email,"Resgistration Complete",msg,"","")
-            return Response("successfully registered",200)
+            resp = emailHelper.send_email([email],"Registration Complete",msg)
+            if 200 <= resp < 299:
+                return Response("successfully registered",resp)
+            else:
+                return Response("Error occured", resp)

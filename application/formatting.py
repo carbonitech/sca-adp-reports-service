@@ -1,8 +1,9 @@
 import io
 import pandas
+from typing import Dict
 
 
-def convert_to_dfs(data: bytes) -> dict[str,pandas.DataFrame]:
+def convert_to_dfs(data: bytes) -> Dict[str,pandas.DataFrame]:
     
     result = {}
     excel_file = pandas.ExcelFile(io.BytesIO(data))
@@ -14,7 +15,7 @@ def convert_to_dfs(data: bytes) -> dict[str,pandas.DataFrame]:
     return result
 
 
-def convert_to_bytes(dfs: dict[str,pandas.DataFrame]) -> bytes:
+def convert_to_bytes(dfs: Dict[str,pandas.DataFrame]) -> bytes:
 
     bytes_file = io.BytesIO()
     with pandas.ExcelWriter(bytes_file) as file:
@@ -36,7 +37,7 @@ def remove_extra_rows(df: pandas.DataFrame) -> pandas.DataFrame:
     return new_df
 
 
-def format_dfs(dfs: dict[str,pandas.DataFrame]) -> dict[str,pandas.DataFrame]:
+def format_dfs(dfs: Dict[str,pandas.DataFrame]) -> Dict[str,pandas.DataFrame]:
     return {name: remove_extra_rows(df) for name, df in dfs.items()}
 
 

@@ -95,22 +95,19 @@ def run_service(**kwargs) -> None:
         )
     except LoginError:
         emailHelper.send_email(
-            email,
-            "Failed to Login",
-            "Failed to log-in to ADPinside.com with your credentials",
-            "",""
+            [email],
+            "Failed to Login to ADPinside.com",
+            "Failed to login with credentials"
         )
     except Exception as e:
         emailHelper.send_email(
-            "jcarboni@shupecarboni.com",
-            "Error in adp-report-api",
+            ["jcarboni@shupecarboni.com"],
+            "Error occurred in adp-report-api",
             traceback.format_exc(e),
-            "",""
         )
     else:
         emailHelper.send_email(
-            email,
+            [email],
             "ADP Open Orders & Shipments",
-            "","","",
-            (formatting.format_tables(report_bytes), "ADP Report.xlsx")
+            attachments=[("ADP Report.xlsx",formatting.format_tables(report_bytes))]
         )

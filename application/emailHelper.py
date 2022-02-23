@@ -1,15 +1,20 @@
 """subclass EmailMessage to simplify file attachments and building/sending an email"""
-from typing import Union
+import os
+from typing import Union, List
 from email.message import EmailMessage
 import mimetypes
+import requests
+import json
 import smtplib
-import os
 from dotenv import load_dotenv
+
+import application.auth.auth_confidential_client_secret as azure_auth
 
 load_dotenv()
 
-EMAIL_ADDRESS = os.environ.get("OUTLOOK_EMAIL_ADDRESS")
-EMAIL_PASSWORD = os.environ.get("OUTLOOK_PASSWORD")
+LOGIN_EMAIL_ADDRESS = os.environ.get("LOGIN_EMAIL_ADDRESS")
+LOGIN_EMAIL_PASSWORD = os.environ.get("LOGIN_EMAIL_PASSWORD")
+SENDER_EMAIL_ADDRESS = os.environ.get("SENDER_EMAIL_ADDRESS")
 
 class CustomEmailMessage(EmailMessage):
     """
@@ -39,7 +44,7 @@ class CustomEmailMessage(EmailMessage):
         )
 
 
-def send_email(recipients, subject, template_msg, msg_list, 
+def send_email_old(recipients, subject, template_msg, msg_list, 
         msg_signature, attachments: Union[str,list,tuple]=None):
     """
     conveinece function for building and sending an email
@@ -48,7 +53,7 @@ def send_email(recipients, subject, template_msg, msg_list,
     email = CustomEmailMessage()
     email['Subject'] = subject
     email['To'] = recipients
-    email['From'] = EMAIL_ADDRESS
+    email['From'] = SENDER_EMAIL_ADDRESS
     email.set_content("")
     email.add_alternative(f"""
         <font face="Roboto, sans-serif">
@@ -72,6 +77,43 @@ def send_email(recipients, subject, template_msg, msg_list,
     # send Email
     mailserver = smtplib.SMTP('smtp.office365.com',587)
     mailserver.starttls()
-    mailserver.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+    mailserver.login(LOGIN_EMAIL_ADDRESS, LOGIN_EMAIL_PASSWORD)
     mailserver.send_message(email)
     mailserver.quit()
+
+def send_email(recipients: list, subject: str, message: str=None, attachments: List[tuple]=None):
+    """ Send email as a different user using Microsoft Graph API"""
+
+    recipients_formatted = [{"emailAddress": {"address": recipient}} for recipient in recipients]
+    sendmail_request_body = {
+        "subject": f"{subject}",
+        "toRecipients": recipients_formatted,
+        "from": {
+                "emailAddress": {
+                    "address": f"{SENDER_EMAIL_ADDRESS}"
+                }
+        },
+        "body": {
+            "contentType": "Text",
+            "content": f"{message}"
+        }
+    }
+    if attachments:
+        attachments_formatted = [
+            {                
+                "@odata.type": "#microsoft.graph.fileAttachment",
+                "name": f"{name}",
+                "contentType": "application/vnd.ms-excel",
+                "contentBytes": f"{content}"
+            } for name, content in attachments
+        ]
+    sendmail_request_body.update({"attachments": attachments_formatted})
+
+    api_url = "https://graph.microsoft.com/v1.0/me/sendMail"
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": 'Bearer ' + azure_auth.get_auth_token_for_ms_graph()}
+    r = requests.post(api_url, headers=headers, json={"message": sendmail_request_body})
+    print(r.content)
+
+    return r.status_code
