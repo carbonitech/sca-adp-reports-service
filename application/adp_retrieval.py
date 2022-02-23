@@ -2,8 +2,11 @@ import traceback
 import requests
 import json
 import os
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from application import emailHelper, formatting
+
+load_dotenv()
 
 _HERE = os.path.dirname(__file__)
 
@@ -101,7 +104,7 @@ def run_service(**kwargs) -> None:
         )
     except Exception as e:
         emailHelper.send_email(
-            ["jcarboni@shupecarboni.com"],
+            [os.getenv("LOGIN_EMAIL_ADDRESS")],
             "Error occurred in adp-report-api",
             traceback.format_exc(e),
         )
@@ -109,5 +112,6 @@ def run_service(**kwargs) -> None:
         emailHelper.send_email(
             [email],
             "ADP Open Orders & Shipments",
+            "File attached",
             attachments=[("ADP Report.xlsx",formatting.format_tables(report_bytes))]
         )
