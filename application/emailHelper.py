@@ -3,6 +3,7 @@ import os
 from typing import Union, List
 from email.message import EmailMessage
 import mimetypes
+import base64
 import requests
 import smtplib
 from dotenv import load_dotenv
@@ -94,7 +95,7 @@ def send_email(recipients: list, subject: str, message: str=None, attachments: L
                 }
         },
         "body": {
-            "contentType": "Text",
+            "contentType": "HTML",
             "content": f"{message}"
         }
     }
@@ -103,8 +104,8 @@ def send_email(recipients: list, subject: str, message: str=None, attachments: L
             {                
                 "@odata.type": "#microsoft.graph.fileAttachment",
                 "name": f"{name}",
-                "contentType": "application/vnd.ms-excel",
-                "contentBytes": f"{content}"
+                "contentType": f"{mimetypes.guess_type(name)[0] or 'application/octet-stream'}",
+                "contentBytes": f"{base64.b64encode(content).decode('utf-8')}" # why is this encode -> decode necessary??
             } for name, content in attachments
         ]
         sendmail_request_body.update({"attachments": attachments_formatted})
@@ -115,5 +116,4 @@ def send_email(recipients: list, subject: str, message: str=None, attachments: L
         "Authorization": 'Bearer ' + azure_auth.get_auth_token_for_ms_graph()}
     r = requests.post(api_url, headers=headers, json={"message": sendmail_request_body})
     print(r.content)
-
     return r.status_code
