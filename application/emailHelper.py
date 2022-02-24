@@ -47,5 +47,5 @@ def send_email(recipients: list, subject: str, message: str=None, attachments: L
         "Content-type": "application/json",
         "Authorization": 'Bearer ' + azure_auth.get_auth_token_for_ms_graph()}
     r = requests.post(api_url, headers=headers, json={"message": sendmail_request_body})
-    print(r.content)
-    return r.status_code
+
+    return r

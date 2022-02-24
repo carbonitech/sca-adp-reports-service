@@ -42,11 +42,11 @@ def request_report():
         else:
             user = conn.execute(f"SELECT * FROM {TABLE} WHERE api_key = %s;", [key]).fetchone()
             if user:
-                company=user[0]
-                un=user[1]
-                pw=user[2]
-                email=user[3]
-                last_call = user[5]
+                company=user[1]
+                un=user[2]
+                pw=user[3]
+                email=user[4]
+                last_call = user[6]
 
                 now = datetime.now()
                 if last_call:
@@ -96,29 +96,17 @@ def register_user():
         db_tables_namelist = [tab[0] for tab in db_tables]
         
         if TABLE not in db_tables_namelist:
-            first_user = pandas.DataFrame(
-                {'company': [company],
-                'username': [user],
-                'password': [password],
-                'email_address': [email],
-                'api_key': [api_key],
-                'last_request': datetime.now()-timedelta(seconds=300)}
-                )
-            first_user.to_sql(TABLE, conn, index=False)
-            resp = emailHelper.send_email([email],"Registration Complete",msg)
-            if 200 <= resp < 299:
-                return Response("Database initialized and first user created", resp)
-            else:
-                return Response("Error occured", resp)
+            with open('./static/schemas.sql','r') as file:
+                conn.execute(file.read())
+
+        conn.execute(
+            f"""
+            INSERT INTO {TABLE} (company, username, password, email_address, api_key, last_request) 
+            VALUES(%s, %s, %s, %s, %s, %s);
+            """,
+            (company, user, password, email, api_key,datetime.now()-timedelta(seconds=300)))
+        resp = emailHelper.send_email([email],"Registration Complete",msg)
+        if 200 <= resp.status_code < 299:
+            return Response("successfully registered",resp.status_code)
         else:
-            conn.execute(
-                f"""
-                INSERT INTO {TABLE} (company, username, password, email_address, api_key, last_request) 
-                VALUES(%s, %s, %s, %s, %s, %s);
-                """,
-                (company, user, password, email, api_key,datetime.now()-timedelta(seconds=300)))
-            resp = emailHelper.send_email([email],"Registration Complete",msg)
-            if 200 <= resp < 299:
-                return Response("successfully registered",resp)
-            else:
-                return Response("Error occured", resp)
+            return Response("Error occured", resp.status_code)
