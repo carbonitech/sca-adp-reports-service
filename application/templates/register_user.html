@@ -1,8 +1,9 @@
 <!-- Register a new user for the api -->
 {% extends "base.html" %}
 {% block content %}
-<form style="display:flex; flex-direction:column; max-width: 300px;">
+<form style="display:flex; flex-direction:column; max-width: 300px;", method="post">
 
+    <h2>Register a new user:</h2>
     <label for="company">Company:</label>
     <input type="text" id="company" name="company"><br>
 
@@ -10,7 +11,7 @@
     <input type="text" id="user" name="user"><br>
 
     <label for="password">Password:</label>
-    <input type="text" id="password" name="password"><br>
+    <input type="password" id="password" name="password"><br>
 
     <label for="email">Email:</label>
     <input type="text" id="email" name="email"><br>
