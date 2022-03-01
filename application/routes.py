@@ -65,48 +65,52 @@ def request_report():
             return Response(f"Request received. Check your email {email} after a few moments.",200)
 
 
-@adp.route('/adp-reports/new_user')
+@adp.route('/users', methods=['GET','POST'])
 def register_user():
 
     if "facebookexternalhit" in str(request.user_agent):
         return Response("Go Away",418)
 
-    company = request.args.get('company', type=str)
-    user = request.args.get('user', type=str)
-    password = request.args.get('password', type=str)
-    email = request.args.get('email', type=str)
+    if request.method == 'POST':
 
-    if not company or not user or not password or not email:
-        return render_template('register_user.html')
+        company = request.form.get('company', type=str)
+        user = request.form.get('user', type=str)
+        password = request.form.get('password', type=str)
+        email = request.form.get('email', type=str)
 
-    engine = create_engine(DATABASE)
-    with engine.connect() as conn:
-        api_key = sha256((company+user+email+password).encode()).hexdigest()
-        msg = f"""
-            <p>Successfully Registered.</p>
-            <p>Use this link to have the ADP reports automatically emailed to you upon request</p>
-            <p style="margin-left: 15px">https://adp-report-api.herokuapp.com/adp-reports?api-key={api_key}</p>
-            """
-        db_tables = conn.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            ORDER BY table_name;
-        """).fetchall()
-        db_tables_namelist = [tab[0] for tab in db_tables]
-        
-        if TABLE not in db_tables_namelist:
-            with open('./static/schemas.sql','r') as file:
-                conn.execute(file.read())
+        if not company or not user or not password or not email:
+            return render_template('register_user.html')
 
-        conn.execute(
-            f"""
-            INSERT INTO {TABLE} (company, username, password, email_address, api_key, last_request) 
-            VALUES(%s, %s, %s, %s, %s, %s);
-            """,
-            (company, user, password, email, api_key,datetime.now()-timedelta(seconds=300)))
-        resp = emailHelper.send_email([email],"Registration Complete",msg)
-        if 200 <= resp.status_code < 299:
-            return Response("successfully registered",resp.status_code)
-        else:
-            return Response("Error occured", resp.status_code)
+        engine = create_engine(DATABASE)
+        with engine.connect() as conn:
+            api_key = sha256((company+user+email+password).encode()).hexdigest()
+            msg = f"""
+                <p>Successfully Registered.</p>
+                <p>Use this link to have the ADP reports automatically emailed to you upon request</p>
+                <p style="margin-left: 15px">https://adp-report-api.herokuapp.com/adp-reports?api-key={api_key}</p>
+                """
+            db_tables = conn.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                ORDER BY table_name;
+            """).fetchall()
+            db_tables_namelist = [tab[0] for tab in db_tables]
+            
+            if TABLE not in db_tables_namelist:
+                with open('./static/schemas.sql','r') as file:
+                    conn.execute(file.read())
+
+            conn.execute(
+                f"""
+                INSERT INTO {TABLE} (company, username, password, email_address, api_key, last_request) 
+                VALUES(%s, %s, %s, %s, %s, %s);
+                """,
+                (company, user, password, email, api_key,datetime.now()-timedelta(seconds=300)))
+            resp = emailHelper.send_email([email],"Registration Complete",msg)
+            if 200 <= resp.status_code < 299:
+                return Response("successfully registered",resp.status_code)
+            else:
+                return Response("Error occured", resp.status_code)
+    
+    return render_template('register_user.html')
