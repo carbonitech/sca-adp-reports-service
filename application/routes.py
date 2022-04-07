@@ -1,5 +1,4 @@
 import os
-import pandas
 from datetime import datetime, timedelta
 from hashlib import sha256
 from dotenv import load_dotenv
