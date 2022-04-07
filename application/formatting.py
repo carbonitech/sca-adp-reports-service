@@ -29,10 +29,13 @@ def convert_to_bytes(dfs: Dict[str,pandas.DataFrame]) -> bytes:
 def remove_extra_rows(df: pandas.DataFrame) -> pandas.DataFrame:
     
     new_df = df.copy()
-
-    new_df.dropna(subset=['Description'], inplace=True)
-    dup_header_row_filter = new_df['Description'] != 'Description'
-    new_df = new_df[dup_header_row_filter]
+    try:
+        new_df.dropna(subset=['Description'], inplace=True)
+    except KeyError:
+        pass
+    else:
+        dup_header_row_filter = new_df['Description'] != 'Description'
+        new_df = new_df[dup_header_row_filter]
 
     return new_df
 
